@@ -1,0 +1,17 @@
+## @file
+#  IntelGopDriver Binary
+#
+#  Copyright (c) 2006 - 2011, Intel Corporation. All rights reserved.<BR>
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+#
+##
+
+[Defines]
+  INF_VERSION                    = 0x00010005
+  BASE_NAME                      = IntelGopDriver
+  FILE_GUID                      = 1647B4F3-3E8A-4FDD-81C8-328ED647AB1A
+  MODULE_TYPE                    = UEFI_DRIVER
+  VERSION_STRING                 = 1.0
+
+[Binaries.X64]
+  PE32|IntelGopDriver.efi|*

@@ -729,6 +729,9 @@
   OvmfPkg/XenIoPciDxe/XenIoPciDxe.inf
   OvmfPkg/XenBusDxe/XenBusDxe.inf
   OvmfPkg/XenPvBlkDxe/XenPvBlkDxe.inf
+  OvmfPkg/IntelGop/IntelGopDriver.inf
+  OvmfPkg/Vbt/Vbt.inf
+  OvmfPkg/PlatformGopPolicy/PlatformGopPolicy.inf
   MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
   MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
   MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
