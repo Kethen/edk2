@@ -1,3 +1,99 @@
+inspired by https://forum.proxmox.com/threads/igd-gvt-d-ovmf%EF%BC%88add-the-vbt-and-gop-drivers-to-the-ovmf-%E6%B7%BB%E5%8A%A0%E6%A0%B8%E6%98%BE%E9%A9%B1%E5%8A%A8%E5%88%B0ovmf%EF%BC%81%EF%BC%89.79858/, currently on edk2-stable202105, with GOP support from https://github.com/projectacrn/acrn-edk2, intel specific patches from https://projectacrn.github.io/latest/tutorials/gpu-passthru.html
+
+https://wiki.archlinux.org/title/Intel_GVT-g#Using_DMA-BUF_with_UEFI/OVMF boot rom from there will still likely be required
+
+Vbt.bin and IntelGopDriver.efi extraction instruction:
+
+https://github.com/Kethen/edk2/blob/edk2-intel-gop/extract_vbt_gop.md
+
+Build Instruction:
+
+if podman is available this build script can be used https://github.com/Kethen/edk2/blob/edk2-intel-gop/build_ovmf.sh, it is modified from https://projectacrn.github.io/latest/_static/downloads/build_acrn_ovmf.sh
+
+otherwise below are the steps
+
+.. code-block:: bash
+
+  # requires GCC5, iasm, nasm, python, below attaches a docker file for reference
+  # clone this project
+  git clone https://github.com/Kethen/edk2
+  cd edk2
+  
+  # pull submodules
+  git submodule update --init --recursive
+  
+  # bootstrap(?) edk2 build environment
+  source edksetup.sh
+  
+  # copy IntelGopDriver.efi and Vbt.bin extracted from your target host
+  cp <path> OvmfPkg/IntelGop/IntelGopDriver.efi
+  cp <path> OvmfPkg/Vbt/Vbt.bin
+  
+  # Prepare base tools
+  make -C BaseTools
+  
+  # Edit Conf/target.txt with these build target specs
+  # ACTIVE_PLATFORM = OvmfPkg/OvmfPkgX64.dsc
+  # TARGET_ARCH = X64
+  # TOOL_CHAIN_TAG = GCC5
+  
+  # build
+  build -DFD_SIZE_2MB -DDEBUG_ON_SERIAL_PORT=TRUE
+
+  # built files can be found in Build/OvmfX64/DEBUG_GCC5/FV, or Build/OvmfX64/RELEASE_GCC5/FV for release builds
+
+  # debug messages can be viewed during boot with:
+  # qemu-kvm ... -bios OVMF.fd -serial stdio
+  
+  # debug message can be disabled by building changing Conf/target.txt
+  # TARGET = RELEASE
+
+Reference Docker File:
+
+.. code-block:: bash
+
+  FROM ubuntu:18.04
+  RUN apt update; apt install -y gcc-5 g++-5 make nano git python uuid-dev nasm iasl
+  RUN ln -s /usr/bin/gcc-5 /usr/bin/gcc; ln -s /usr/bin/gcc-5 /usr/bin/cc; ln -s /usr/bin/g++-5 /usr/bin/g++; ln -s /usr/bin/gcc-ar-5 /usr/bin/gcc-ar
+
+Reference Build Shell:
+
+.. code-block:: bash
+
+  podman image build -t edk2-build -f edk2-build-docker-file
+  podman run \
+    -it --rm \
+    -v ./edk2:/workdir \
+    -w /workdir \
+    --entrypoint /bin/bash \
+    edk2-build
+
+Reference Boot Script:
+
+.. code-block:: bash
+
+  PLATFORM="-enable-kvm -cpu host -m 2G -smp sockets=1,cores=2,threads=1 -M pc"
+  
+  FIRMWARE="-drive if=pflash,format=raw,file=OVMF_CODE.fd,readonly=on"
+  FIRMWARE="$FIRMWARE -drive if=pflash,format=raw,file=OVMF_VARS.fd"
+  
+  NETWORK="-netdev user,id=eth0"
+  NETWORK="$NETWORK -device virtio-net,netdev=eth0,mac=12:49:59:bc:16:12,bus=pci.0,addr=3"
+  
+  PASS="-device vfio-pci,host=00:02.0,x-igd-gms=2,id=hostdev0,bus=pci.0,addr=2,x-igd-opregion=on,romfile=vbios_gvt_uefi.rom,driver=vfio-pci-nohotplug"
+  
+  # update evdev as needed, or pass input device in your own way
+  INPUT="$INPUT -device virtio-input-host-pci,evdev=/dev/input/by-path/pci-0000:00:15.0-platform-i2c_designware.0-event-mouse,multifunction=on,bus=pci.0,addr=5.0"
+  INPUT="$INPUT -device virtio-input-host-pci,evdev=/dev/input/by-path/platform-i8042-serio-0-event-kbd,multifunction=on,bus=pci.0,addr=5.1"
+  
+  MISC="-nodefaults -display none"
+  MISC="$MISC -vga none"
+  MISC="$MISC -serial stdio"
+  
+  # for testing I usually run `boot.sh -cdrom <live cd path>`
+  qemu-kvm $PLATFORM $FIRMWARE $NETWORK $PASS $INPUT $MISC "$@"
+
+
 ==============
 EDK II Project
 ==============
