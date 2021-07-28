@@ -29,6 +29,7 @@
 gop_bin_dir="./gop"
 podman_image_name="ubuntu:ovmf.18.04"
 proxy_conf="proxy.conf"
+branch=""
 
 if [ ! -x "$(command -v podman)" ]; then
     echo "Install Docker first:"
@@ -59,7 +60,7 @@ fi
 usage()
 {
     echo "$0 [-v ver] [-i] [-s] [-h]"
-    echo "  -v ver: The release version of ACRN, e.g. 2.3"
+    echo "  -b branch/tag: checkout branch/tag instead of leaving it as default"
     echo "  -i:     Delete the existing docker image ${docker_image_name} and re-create it"
     echo "  -s:     Delete the existing edk2 source code and re-download/re-patch it"
     echo "  -h:     Show this help"
@@ -69,7 +70,7 @@ usage()
 re_download=0
 re_create_image=0
 
-while getopts "hisv:" opt
+while getopts "hisb:" opt
 do
     case "${opt}" in
         h)
@@ -80,6 +81,9 @@ do
             ;;
         s)
             re_download=1
+            ;;
+        b)
+            branch=${OPTARG}
             ;;
         ?)
             echo "${OPTARG}"
@@ -119,6 +123,10 @@ create_edk2_workspace()
     fi
 
     cd edk2
+    if [ -n "$branch" ]
+    then
+    	git checkout "$branch"
+    fi
     git submodule update --init --recursive
     if [ $? -ne 0 ]; then
         echo "git submodule edk2 failed"
