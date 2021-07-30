@@ -808,9 +808,12 @@
   OvmfPkg/VirtioBlkDxe/VirtioBlk.inf
   OvmfPkg/VirtioScsiDxe/VirtioScsi.inf
   OvmfPkg/VirtioRngDxe/VirtioRng.inf
-  OvmfPkg/XenIoPciDxe/XenIoPciDxe.inf
-  OvmfPkg/XenBusDxe/XenBusDxe.inf
-  OvmfPkg/XenPvBlkDxe/XenPvBlkDxe.inf
+  #OvmfPkg/XenIoPciDxe/XenIoPciDxe.inf
+  #OvmfPkg/XenBusDxe/XenBusDxe.inf
+  #OvmfPkg/XenPvBlkDxe/XenPvBlkDxe.inf
+  OvmfPkg/IntelGop/IntelGopDriver.inf
+  OvmfPkg/Vbt/Vbt.inf
+  OvmfPkg/PlatformGopPolicy/PlatformGopPolicy.inf
 !if $(PVSCSI_ENABLE) == TRUE
   OvmfPkg/PvScsiDxe/PvScsiDxe.inf
 !endif

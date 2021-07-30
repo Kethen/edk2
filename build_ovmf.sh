@@ -30,6 +30,7 @@ gop_bin_dir="./gop"
 podman_image_name="ubuntu:ovmf.18.04"
 proxy_conf="proxy.conf"
 branch=""
+secureboot=""
 
 if [ ! -x "$(command -v podman)" ]; then
     echo "Install Docker first:"
@@ -63,6 +64,7 @@ usage()
     echo "  -b branch/tag: checkout branch/tag instead of leaving it as default"
     echo "  -i:     Delete the existing docker image ${docker_image_name} and re-create it"
     echo "  -s:     Delete the existing edk2 source code and re-download/re-patch it"
+    echo "  -S:     Build vanilla secure boot ovmf instead of intel gop"
     echo "  -h:     Show this help"
     exit
 }
@@ -70,7 +72,7 @@ usage()
 re_download=0
 re_create_image=0
 
-while getopts "hisb:" opt
+while getopts "hisb:S" opt
 do
     case "${opt}" in
         h)
@@ -84,6 +86,9 @@ do
             ;;
         b)
             branch=${OPTARG}
+            ;;
+        S)
+            secureboot=yes
             ;;
         ?)
             echo "${OPTARG}"
@@ -181,10 +186,21 @@ sed -i 's:^TOOL_CHAIN_TAG\s*=\s*\w*:TOOL_CHAIN_TAG        = GCC5:g' Conf/target.
 
 cd ..
 
+SECURE_BOOT=""
+if [ -n "$secureboot" ]
+then
+	SECURE_BOOT="-DSECURE_BOOT_ENABLE -DSMM_REQUIRE -DEXCLUDE_SHELL_FROM_FD"
+	SECURE_BOOT="$SECURE_BOOT -DTPM_ENABLE"
+	SECURE_BOOT="$SECURE_BOOT -a IA32 -a X64 -p OvmfPkg/OvmfPkgIa32X64.dsc"
+fi
+
+OVMF_FLAGS="-DFD_SIZE_2MB -DDEBUG_ON_SERIAL_PORT=TRUE"
+OVMF_FLAGS="$OVMF_FLAGS -DNETWORK_IP6_ENABLE -DNETWORK_HTTP_BOOT_ENABLE -DNETWORK_TLS_ENABLE"
+
 podman run \
     -ti \
     --rm \
     -w $PWD/edk2 \
     -v $PWD:$PWD \
     ${podman_image_name} \
-    /bin/bash -c "source edksetup.sh && make -C BaseTools && build -DFD_SIZE_2MB -DDEBUG_ON_SERIAL_PORT=TRUE"
+    /bin/bash -c "source edksetup.sh && make -C BaseTools && build $OVMF_FLAGS $SECURE_BOOT"
