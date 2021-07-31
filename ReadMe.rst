@@ -8,7 +8,7 @@ https://github.com/Kethen/edk2/blob/edk2-intel-gop/extract_vbt_gop.md
 
 Build Instruction:
 
-if podman is available this build script can be used https://github.com/Kethen/edk2/blob/edk2-intel-gop/build_ovmf.sh, it is modified from https://projectacrn.github.io/latest/_static/downloads/build_acrn_ovmf.sh
+if podman is available this build script can be used https://github.com/Kethen/edk2-build-intel-gop
 
 otherwise below are the steps
 
